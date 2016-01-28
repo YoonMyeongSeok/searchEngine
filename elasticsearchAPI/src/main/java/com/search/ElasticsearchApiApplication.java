@@ -1,10 +1,13 @@
 package com.search;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
+import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 
 @SpringBootApplication
 public class ElasticsearchApiApplication {
@@ -18,27 +21,37 @@ public class ElasticsearchApiApplication {
 
 	public void curlTest() throws Exception{
 		
-		Process process = null;
-		BufferedReader br = null;
-		process = Runtime.getRuntime().exec("curl -XGET http://112.216.66.194:9200/books/book/1");
-		
-		br = new BufferedReader(new InputStreamReader(process.getErrorStream(),"UTF-8"));
-		
-		String line = null;
-		while ((line = br.readLine())!= null) {
-			System.out.println(line);
-		}
+		String strUrl = "http://112.216.66.194:9200/books/book/2";
+		URL url = new URL(strUrl);
+	    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	    conn.setDoOutput(true);
+	    conn.setDoInput(true);
+	    conn.setRequestMethod("POST");
+	    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+	    conn.setRequestProperty("Accept", "application/json");
 
-		br = null;
-		br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	    JSONObject obj = new JSONObject();
+	    obj.put("transaction_type", "01");
+	    obj.put("amount", "101");
+	    obj.put("cardholder_name", "PaulTest33");
+	    obj.put("transarmor_token", "3000332");
+	    obj.put("cc_expiry", "001611");
+	    obj.put("credit_card_type", "Visa333");
 
-		System.out.println("\n ## RESULT: ");
-		line = null;
-		while ((line = br.readLine())!= null) {
-			System.out.println(line);
-		}
-		
-		process.waitFor();
+	    String input = obj.toString();	    
+	    System.out.println(input);
+
+	    OutputStream os = conn.getOutputStream();
+	    os.write(input.getBytes());
+	    os.flush();
+	    
+	    System.out.println("Response Code : " + conn.getResponseCode() + ", " + conn.getResponseMessage());
+	    if (!(conn.getResponseCode() == HttpURLConnection.HTTP_CREATED || conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+	    	throw new RuntimeException("Failed : HTTP error code : "+ conn.getResponseCode() + conn.getResponseMessage());
+	    }
+	    
+	    conn.disconnect();
+	    os.close();
 	}
 
 }
